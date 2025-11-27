@@ -1,0 +1,446 @@
+//1️⃣ 프로젝트 구조 (예시)
+sbb2-main/
+├─ src/main/java/com/sbb2/
+│  ├─ controller/
+│  │    ├─ MemberController.java
+│  │    └─ ResumeController.java
+│  ├─ model/
+│  │    ├─ Member.java
+│  │    └─ Resume.java
+│  ├─ repository/
+│  │    ├─ MemberRepository.java
+│  │    └─ ResumeRepository.java
+│  └─ service/
+│       ├─ MemberService.java
+│       └─ ResumeService.java
+├─ src/main/resources/templates/
+│    ├─ login.html
+│    ├─ register.html
+│    ├─ resume_form.html
+│    └─ resume_list.html
+└─ src/main/resources/application.properties
+
+//2️⃣ 핵심 코드 예시
+1. Member.java (회원 모델)
+package com.sbb2.model;
+
+public class Member {
+    private String id;
+    private String password;
+    private String name;
+
+    // 생성자, getter/setter
+}
+
+2.Resume.java (자소서 모델)
+package com.sbb2.model;
+
+public class Resume {
+    private String memberId;
+    private String title;
+    private String content;
+
+    // 생성자, getter/setter
+}
+3.MemberController.java (회원 관련)
+package com.sbb2.controller;
+
+import com.sbb2.model.Member;
+import com.sbb2.service.MemberService;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class MemberController {
+    private MemberService service = new MemberService();
+    private Map<String, Member> session = new HashMap<>();
+
+    public String register(String id, String pw, String name) {
+        if(service.register(new Member(id, pw, name))) {
+            return "회원가입 성공";
+        }
+        return "회원가입 실패";
+    }
+
+    public String login(String id, String pw) {
+        Member m = service.login(id, pw);
+        if(m != null) {
+            session.put("loginUser", m);
+            return "로그인 성공";
+        }
+        return "로그인 실패";
+    }
+}
+4.ResumeController.java (자소서 제출)
+package com.sbb2.controller;
+
+import com.sbb2.model.Resume;
+import com.sbb2.service.ResumeService;
+
+import java.util.List;
+
+public class ResumeController {
+    private ResumeService service = new ResumeService();
+
+    public String submitResume(String memberId, String title, String content) {
+        service.save(new Resume(memberId, title, content));
+        return "제출 완료";
+    }
+
+    public List<Resume> viewAll() {
+        return service.getAll();
+    }
+}
+3️⃣ HTML 예시
+5. resume_form.html
+
+<form action="/submit" method="post">
+  <input type="text" name="title" placeholder="제목" required>
+  <textarea name="content" placeholder="자소서 내용" required></textarea>
+  <button type="submit">제출</button>
+</form>
+
+
+6.resume_list.html
+<h2>제출된 자소서</h2>
+<ul>
+  <!-- 서버에서 불러온 자소서 리스트 반복 출력 -->
+</ul>
+
+4️⃣ 동작 흐름
+
+회원가입 → 로그인
+
+로그인 후 자소서 작성 페이지 접근 → 작성 후 제출
+
+관리자는 제출된 자소서 리스트 확인 가능
+
+/★
+1️⃣ 프로젝트 구조
+sbb2-resume/
+├─ src/main/java/com/sbb2/
+│  ├─ controller/
+│  │    ├─ MemberController.java
+│  │    └─ ResumeController.java
+│  ├─ model/
+│  │    ├─ Member.java
+│  │    └─ Resume.java
+│  ├─ repository/
+│  │    ├─ MemberRepository.java
+│  │    └─ ResumeRepository.java
+│  └─ service/
+│       ├─ MemberService.java
+│       └─ ResumeService.java
+├─ src/main/resources/templates/
+│    ├─ login.html
+│    ├─ register.html
+│    ├─ resume_form.html
+│    └─ resume_list.html
+├─ src/main/resources/application.properties
+└─ pom.xml
+
+2️⃣ Maven pom.xml (Spring Boot + Thymeleaf)
+<project xmlns="http://maven.apache.org/POM/4.0.0" ...>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.sbb2</groupId>
+    <artifactId>sbb2-resume</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.0</version>
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+</project>
+
+3️⃣ 모델 (JPA 엔티티)
+Member.java
+package com.sbb2.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity
+public class Member {
+    @Id
+    private String id;
+    private String password;
+    private String name;
+
+    public Member() {}
+    public Member(String id, String password, String name) {
+        this.id = id;
+        this.password = password;
+        this.name = name;
+    }
+
+    // getter & setter
+}
+
+Resume.java
+package com.sbb2.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+
+@Entity
+public class Resume {
+    @Id @GeneratedValue
+    private Long id;
+    private String memberId;
+    private String title;
+    private String content;
+
+    public Resume() {}
+    public Resume(String memberId, String title, String content) {
+        this.memberId = memberId;
+        this.title = title;
+        this.content = content;
+    }
+
+    // getter & setter
+}
+
+4️⃣ Repository
+MemberRepository.java
+package com.sbb2.repository;
+
+import com.sbb2.model.Member;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface MemberRepository extends JpaRepository<Member, String> {
+    Member findByIdAndPassword(String id, String password);
+}
+
+ResumeRepository.java
+package com.sbb2.repository;
+
+import com.sbb2.model.Resume;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface ResumeRepository extends JpaRepository<Resume, Long> {
+    List<Resume> findByMemberId(String memberId);
+}
+
+5️⃣ 서비스
+MemberService.java
+package com.sbb2.service;
+
+import com.sbb2.model.Member;
+import com.sbb2.repository.MemberRepository;
+import org.springframework.stereotype.Service;
+
+@Service
+public class MemberService {
+    private final MemberRepository repo;
+
+    public MemberService(MemberRepository repo) { this.repo = repo; }
+
+    public boolean register(Member m) {
+        if(repo.existsById(m.getId())) return false;
+        repo.save(m);
+        return true;
+    }
+
+    public Member login(String id, String pw) {
+        return repo.findByIdAndPassword(id, pw);
+    }
+}
+
+ResumeService.java
+package com.sbb2.service;
+
+import com.sbb2.model.Resume;
+import com.sbb2.repository.ResumeRepository;
+import org.springframework.stereotype.Service;
+import java.util.List;
+
+@Service
+public class ResumeService {
+    private final ResumeRepository repo;
+
+    public ResumeService(ResumeRepository repo) { this.repo = repo; }
+
+    public void save(Resume r) { repo.save(r); }
+
+    public List<Resume> getAll() { return repo.findAll(); }
+
+    public List<Resume> getByMember(String memberId) { return repo.findByMemberId(memberId); }
+}
+
+6️⃣ 컨트롤러
+MemberController.java
+package com.sbb2.controller;
+
+import com.sbb2.model.Member;
+import com.sbb2.service.MemberService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class MemberController {
+    private final MemberService service;
+
+    public MemberController(MemberService service) { this.service = service; }
+
+    @GetMapping("/register")
+    public String registerForm() { return "register"; }
+
+    @PostMapping("/register")
+    public String register(@RequestParam String id, @RequestParam String password,
+                           @RequestParam String name, Model model) {
+        if(service.register(new Member(id, password, name))) {
+            return "redirect:/login";
+        }
+        model.addAttribute("msg","회원가입 실패: 아이디 중복");
+        return "register";
+    }
+
+    @GetMapping("/login")
+    public String loginForm() { return "login"; }
+
+    @PostMapping("/login")
+    public String login(@RequestParam String id, @RequestParam String password,
+                        HttpSession session, Model model) {
+        Member m = service.login(id, password);
+        if(m != null) {
+            session.setAttribute("loginUser", m);
+            return "redirect:/resume/form";
+        }
+        model.addAttribute("msg","로그인 실패");
+        return "login";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+}
+
+ResumeController.java
+package com.sbb2.controller;
+
+import com.sbb2.model.Member;
+import com.sbb2.model.Resume;
+import com.sbb2.service.ResumeService;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.servlet.http.HttpSession;
+import java.util.List;
+
+@Controller
+@RequestMapping("/resume")
+public class ResumeController {
+    private final ResumeService service;
+
+    public ResumeController(ResumeService service) { this.service = service; }
+
+    @GetMapping("/form")
+    public String form() { return "resume_form"; }
+
+    @PostMapping("/submit")
+    public String submit(@RequestParam String title, @RequestParam String content,
+                         HttpSession session) {
+        Member m = (Member) session.getAttribute("loginUser");
+        if(m != null) {
+            service.save(new Resume(m.getId(), title, content));
+            return "redirect:/resume/list";
+        }
+        return "redirect:/login";
+    }
+
+    @GetMapping("/list")
+    public String list(Model model) {
+        List<Resume> resumes = service.getAll();
+        model.addAttribute("resumes", resumes);
+        return "resume_list";
+    }
+}
+
+7️⃣ 간단 HTML (Thymeleaf)
+register.html
+<form th:action="@{/register}" method="post">
+  <input type="text" name="id" placeholder="아이디" required>
+  <input type="password" name="password" placeholder="비밀번호" required>
+  <input type="text" name="name" placeholder="이름" required>
+  <button type="submit">회원가입</button>
+</form>
+<p th:text="${msg}"></p>
+<a th:href="@{/login}">로그인</a>
+
+login.html
+<form th:action="@{/login}" method="post">
+  <input type="text" name="id" placeholder="아이디" required>
+  <input type="password" name="password" placeholder="비밀번호" required>
+  <button type="submit">로그인</button>
+</form>
+<p th:text="${msg}"></p>
+<a th:href="@{/register}">회원가입</a>
+
+resume_form.html
+<form th:action="@{/resume/submit}" method="post">
+  <input type="text" name="title" placeholder="제목" required>
+  <textarea name="content" placeholder="자소서 내용" required></textarea>
+  <button type="submit">제출</button>
+</form>
+<a th:href="@{/resume/list}">제출 리스트</a>
+<a th:href="@{/logout}">로그아웃</a>
+
+resume_list.html
+<h2>제출된 자소서</h2>
+<ul>
+  <li th:each="r : ${resumes}">
+    <strong th:text="${r.title}"></strong> - <span th:text="${r.memberId}"></span>
+    <p th:text="${r.content}"></p>
+  </li>
+</ul>
+<a th:href="@{/resume/form}">자소서 작성</a>
+<a th:href="@{/logout}">로그아웃</a>
+
+8️⃣ application.properties (H2 DB 설정)
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.h2.console.enabled=true
+spring.jpa.show-sql=true
+spring.jpa.hibernate.ddl-auto=update
+
+
+💡 이렇게 구성하면:
+
+회원가입 / 로그인
+
+로그인 후 자소서 작성 & 제출
+
+제출된 자소서 리스트 확인 가능
+
+H2 DB 사용 → 로컬에서 바로 실행 가능
+
